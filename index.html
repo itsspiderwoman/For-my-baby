@@ -152,12 +152,6 @@ h3 {
   margin-top: 16px;
 }
 
-.outline-button {
-  color: var(--text);
-  background: transparent;
-  border: 1px solid var(--border);
-}
-
 .footer {
   margin-top: 32px;
   color: #a09483;
@@ -173,7 +167,7 @@ h3 {
   font-size: .85rem;
 }
 
-.guess-buttons, .puzzle-buttons {
+.guess-buttons {
   display: flex;
   justify-content: center;
   gap: 12px;
@@ -255,43 +249,10 @@ h3 {
   margin-bottom: 15px;
 }
 
-.hint {
-  color: var(--muted);
-  font-size: .88rem;
-}
-
-.puzzle {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 9px;
-  margin: 25px auto;
-}
-
-.tile {
-  width: 55px;
-  height: 62px;
-  border: 1px solid #d6c29d;
-  border-radius: 12px;
-  color: var(--text);
-  background: linear-gradient(145deg, #fffdf8, #f0e5d1);
-  font: 1.7rem "Playfair Display", Georgia, serif;
-  box-shadow: 0 5px 12px #66574710;
-  cursor: pointer;
-  transition: transform .2s, background .2s;
-}
-
-.tile:hover { transform: translateY(-3px); }
-
-.tile.selected {
-  background: var(--blue);
-  border-color: #8fb3c4;
-  transform: translateY(-5px);
-}
-
 .baby-name {
   overflow-wrap: anywhere;
   letter-spacing: .06em;
+  animation: nameGlow 2s ease-in-out infinite alternate;
 }
 
 blockquote {
@@ -356,10 +317,14 @@ blockquote {
   to { transform: translateY(110vh) rotate(760deg); opacity: .9; }
 }
 
+@keyframes nameGlow {
+  from { text-shadow: 0 0 0 #dcebf2; }
+  to { text-shadow: 0 0 18px #9fc3d466; }
+}
+
 @media (max-width: 480px) {
   body { padding: 12px; }
   .page { padding: 35px 20px; }
-  .tile { width: 48px; height: 55px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -479,6 +444,7 @@ function coverPage() {
 
 function genderPage() {
   playTone(650);
+
   app.innerHTML = `
     <a class="back-link" href="#" id="back-cover">← Back to cover</a>
     <p class="eyebrow">THE FIRST BIG SURPRISE</p>
@@ -515,7 +481,7 @@ function genderPage() {
     <p class="footer">Arriving March 2027</p>
   `;
 
-  document.getElementById("back-cover").onclick = (event) => {
+  document.getElementById("back-cover").onclick = event => {
     event.preventDefault();
     coverPage();
   };
@@ -555,8 +521,7 @@ function genderPage() {
     setTimeout(() => {
       balloon.classList.add("hidden");
 
-      const result = document.getElementById("gender-result");
-      result.classList.remove("hidden");
+      document.getElementById("gender-result").classList.remove("hidden");
 
       document.getElementById("guess-message").textContent =
         guess === "boy"
@@ -579,41 +544,36 @@ function namePage() {
 
   app.innerHTML = `
     <a class="back-link" href="#" id="back-gender">← Back to gender reveal</a>
+    <div class="stars">✦　☁　✦　☾　✦</div>
     <p class="eyebrow">ONE LAST LITTLE SURPRISE</p>
-    <h1>Can You Solve His Name?</h1>
+    <h1>Meet Our <span>Little Prince</span></h1>
     <p class="description">
-      Rearrange the letters to discover the name
-      chosen with so much love.
+      A little name, chosen with so much love, hope, and prayer.
     </p>
 
-    <p class="hint">
-      Hint: His first name has five letters.
-      Tap two letters to swap them.
-    </p>
+    <div class="gold-line"></div>
 
-    <div id="puzzle" class="puzzle"></div>
-    <p id="puzzle-message" class="message" aria-live="polite">
-      Let's discover his name!
-    </p>
-
-    <div class="puzzle-buttons">
-      <button id="check" class="button gold-button">Check My Answer</button>
-      <button id="shuffle" class="button outline-button">Shuffle Again</button>
+    <div id="name-intro">
+      <div class="celebration">🧸 🩵 ✨</div>
+      <p class="hint">Are you ready to meet him?</p>
+      <button class="button blue-button" id="reveal-name">
+        Reveal His Name ♡
+      </button>
     </div>
 
     <section id="name-result" class="result hidden">
-      <div class="celebration">✨ 🧸 ✨</div>
-      <p class="eyebrow">MEET OUR LITTLE BLESSING</p>
+      <div class="celebration">✨ 🩵 ✨</div>
+      <p class="eyebrow">OUR LITTLE BLESSING</p>
       <h2 class="baby-name">AMARI HARRY</h2>
       <p class="description">
-        A name chosen with love, hope,
-        and prayers for a beautiful future.
+        Our precious boy, already so loved.
+        We can't wait to meet you in March 2027.
       </p>
       <blockquote>
         “Every good gift and every perfect gift is from above.”
       </blockquote>
       <p class="reference">JAMES 1:17</p>
-      <button class="button blue-button" id="back-home">
+      <button class="button gold-button" id="back-home">
         Back to the Beginning ♡
       </button>
     </section>
@@ -626,113 +586,19 @@ function namePage() {
     genderPage();
   };
 
-  const puzzle = document.getElementById("puzzle");
-  const message = document.getElementById("puzzle-message");
-  const checkButton = document.getElementById("check");
-  const shuffleButton = document.getElementById("shuffle");
-  const nameResult = document.getElementById("name-result");
+  document.getElementById("reveal-name").onclick = () => {
+    document.getElementById("name-intro").classList.add("hidden");
+    document.getElementById("name-result").classList.remove("hidden");
 
-  const answer = ["A", "M", "A", "R", "I"];
-  let letters = [];
-  let selected = null;
-  let solved = false;
-
-  function shuffleLetters() {
-    let shuffled = [...answer];
-
-    // Fisher-Yates shuffle; repeat if it accidentally spells AMARI.
-    do {
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-      }
-    } while (shuffled.join("") === answer.join(""));
-
-    return shuffled;
-  }
-
-  function renderPuzzle() {
-    puzzle.innerHTML = "";
-
-    letters.forEach((letter, index) => {
-      const tile = document.createElement("button");
-      tile.type = "button";
-      tile.className = "tile" + (selected === index ? " selected" : "");
-      tile.textContent = letter;
-      tile.setAttribute("aria-label", "Letter " + letter);
-
-      tile.onclick = () => {
-        if (solved) return;
-
-        playTone(550);
-
-        if (selected === null) {
-          selected = index;
-          message.textContent = "Now tap another letter to swap them.";
-        } else if (selected === index) {
-          selected = null;
-          message.textContent = "Choose two letters to swap.";
-        } else {
-          [letters[selected], letters[index]] =
-            [letters[index], letters[selected]];
-
-          selected = null;
-          message.textContent = "Nice! Keep going, then check your answer.";
-        }
-
-        renderPuzzle();
-      };
-
-      puzzle.appendChild(tile);
-    });
-  }
-
-  function shufflePuzzle() {
-    solved = false;
-    selected = null;
-    letters = shuffleLetters();
-
-    nameResult.classList.add("hidden");
-    checkButton.classList.remove("hidden");
-    shuffleButton.classList.remove("hidden");
-
-    message.textContent = "Hint: His first name has 5 letters.";
-    renderPuzzle();
-  }
-
-  checkButton.onclick = () => {
-    if (letters.join("") === answer.join("")) {
-      solved = true;
-      selected = null;
-      renderPuzzle();
-
-      message.textContent = "You solved it! ✨";
-      nameResult.classList.remove("hidden");
-      checkButton.classList.add("hidden");
-      shuffleButton.classList.add("hidden");
-
-      celebrate();
-      playTone(880, 0.15);
-      setTimeout(() => playTone(1100, 0.18), 140);
-      setTimeout(() => playTone(1320, 0.23), 280);
-    } else {
-      message.textContent =
-        "Not quite yet! Swap a few letters and try again. 💛";
-      playTone(280);
-    }
-  };
-
-  shuffleButton.onclick = () => {
-    playTone(600);
-    shufflePuzzle();
+    celebrate();
+    playTone(880, 0.15);
+    setTimeout(() => playTone(1100, 0.18), 140);
+    setTimeout(() => playTone(1320, 0.23), 280);
   };
 
   document.getElementById("back-home").onclick = coverPage;
-
-  shufflePuzzle();
 }
 
-// Start at the cover whenever the website first loads.
 coverPage();
 </script>
 </body>
