@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -387,7 +386,7 @@ function playTone(frequency = 700, duration = 0.13) {
     oscillator.start();
     oscillator.stop(audioContext.currentTime + duration + 0.03);
   } catch (error) {
-    // Audio is optional; the website still works without it.
+    // Sound is optional.
   }
 }
 
@@ -520,7 +519,6 @@ function genderPage() {
 
     setTimeout(() => {
       balloon.classList.add("hidden");
-
       document.getElementById("gender-result").classList.remove("hidden");
 
       document.getElementById("guess-message").textContent =
